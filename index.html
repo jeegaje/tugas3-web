@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SITTA — Pemesanan Bahan Ajar UT</title>
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <!-- Indikator loading / error; dihapus setelah app.js selesai mount -->
+  <div id="boot" class="boot">Memuat aplikasi SITTA…</div>
+
+  <!-- Root instance. Template root ditulis inline (bukan di /templates) karena
+       hanya mengatur layout + tab state; semua UI fitur ada di komponen. -->
+  <div id="app" v-cloak>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <div>
+            <h1>Aplikasi Pemesanan Bahan Ajar</h1>
+            <p class="muted">SITTA · Universitas Terbuka · Tugas Praktik 3 (Vue.js 2)</p>
+          </div>
+        </div>
+
+        <nav class="tabs" aria-label="Navigasi halaman">
+          <button
+            type="button"
+            class="tab"
+            :class="{ 'tab--active': tab === 'stok' }"
+            @click="tab = 'stok'">
+            Stok Bahan Ajar <span class="tab__count">{{ stok.length }}</span>
+          </button>
+          <button
+            type="button"
+            class="tab"
+            :class="{ 'tab--active': tab === 'tracking' }"
+            @click="tab = 'tracking'">
+            Tracking DO <span class="tab__count">{{ tracking.length }}</span>
+          </button>
+        </nav>
+      </header>
+
+      <main class="app-main">
+        <ba-stock-table
+          v-show="tab === 'stok'"
+          :stok="stok"
+          :upbjj-list="upbjjList"
+          :kategori-list="kategoriList"
+          @create-stok="addStok"
+          @update-stok="updateStok"
+          @delete-stok="deleteStok">
+        </ba-stock-table>
+
+        <ba-do-tracking
+          v-show="tab === 'tracking'"
+          :tracking="tracking"
+          :paket="paket"
+          :pengiriman-list="pengirimanList"
+          :next-no-do="nextNoDO"
+          @add-do="addDO"
+          @add-perjalanan="addPerjalanan">
+        </ba-do-tracking>
+      </main>
+
+      <footer class="app-footer muted small">
+        Data dummy dari <code>data/dataBahanAjar.json</code> · Komponen Vue global + template terpisah
+      </footer>
+
+      <transition name="fade">
+        <div class="toast" v-show="toast">{{ toast }}</div>
+      </transition>
+    </div>
+  </div>
+
+  <noscript>
+    <p class="boot boot--error">Aplikasi ini membutuhkan JavaScript.</p>
+  </noscript>
+
+  <!-- Google font opsional tidak dipakai agar tetap ringan & bisa offline (CDN Vue tetap butuh internet) -->
+
+  <!-- 1. Vue 2 (dev build agar pesan error informatif) -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+
+  <!-- 2. Service data -->
+  <script src="js/services/api.js"></script>
+
+  <!-- 3. Komponen: dari yang paling kecil ke paling besar -->
+  <script src="js/components/status-badge.js"></script>
+  <script src="js/components/app-modal.js"></script>
+  <script src="js/components/order-form.js"></script>
+  <script src="js/components/stock-table.js"></script>
+  <script src="js/components/do-tracking.js"></script>
+
+  <!-- 4. Root instance (template x-template dimuat via fetch oleh app.js) -->
+  <script src="js/app.js"></script>
+</body>
+</html>

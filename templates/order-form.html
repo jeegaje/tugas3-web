@@ -1,0 +1,124 @@
+<!--
+  File      : templates/order-form.html
+  Template  : tpl-order-form (komponen <ba-order-form>)
+  Indikator : 1.3 mode create/edit, 1.6 form + validasi reaktif + @keyup.enter
+-->
+<script type="text/x-template" id="tpl-order-form">
+  <section class="card form-card" @keyup.enter="submit">
+    <div class="card__head">
+      <div>
+        <h2 class="card__title">
+          <template v-if="isEdit">Edit Bahan Ajar</template>
+          <template v-else>Tambah Bahan Ajar</template>
+        </h2>
+        <p class="muted small">
+          <template v-if="isEdit">
+            Mengubah <strong>{{ item.kode }}</strong> — kode MK boleh diganti, data lama akan ditimpa.
+          </template>
+          <template v-else>
+            Isi data di bawah, lalu tekan <kbd>Enter</kbd> di salah satu input untuk menyimpan.
+          </template>
+        </p>
+      </div>
+      <button type="button" class="btn btn--ghost" @click="$emit('cancel')">Tutup</button>
+    </div>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="field__label">Kode MK <b class="req">*</b></span>
+        <input
+          ref="kode"
+          class="input"
+          :class="{ 'input--error': errors.kode }"
+          type="text"
+          v-model.trim="form.kode"
+          placeholder="EKMA4116">
+        <span class="field__error" v-if="errors.kode">{{ errors.kode }}</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Nama MK <b class="req">*</b></span>
+        <input
+          class="input"
+          :class="{ 'input--error': errors.judul }"
+          type="text"
+          v-model.trim="form.judul"
+          placeholder="Pengantar Manajemen">
+        <span class="field__error" v-if="errors.judul">{{ errors.judul }}</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Kategori <b class="req">*</b></span>
+        <select class="input" :class="{ 'input--error': errors.kategori }" v-model="form.kategori">
+          <option value="">— pilih kategori —</option>
+          <option v-for="k in kategoriList" :key="k" :value="k">{{ k }}</option>
+        </select>
+        <span class="field__error" v-if="errors.kategori">{{ errors.kategori }}</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">UT-Daerah <b class="req">*</b></span>
+        <select class="input" :class="{ 'input--error': errors.upbjj }" v-model="form.upbjj">
+          <option value="">— pilih UT-Daerah —</option>
+          <option v-for="u in upbjjList" :key="u" :value="u">{{ u }}</option>
+        </select>
+        <span class="field__error" v-if="errors.upbjj">{{ errors.upbjj }}</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Lokasi Rak</span>
+        <input class="input" type="text" v-model.trim="form.lokasiRak" placeholder="R1-A3">
+      </label>
+
+      <label class="field">
+        <span class="field__label">Harga (Rp) <b class="req">*</b></span>
+        <input
+          class="input"
+          :class="{ 'input--error': errors.harga }"
+          type="number"
+          min="0"
+          v-model.number="form.harga"
+          placeholder="65000">
+        <span class="field__error" v-if="errors.harga">{{ errors.harga }}</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Jumlah Stok <b class="req">*</b></span>
+        <input
+          class="input"
+          :class="{ 'input--error': errors.qty }"
+          type="number"
+          min="0"
+          v-model.number="form.qty"
+          placeholder="28">
+        <span class="field__error" v-if="errors.qty">{{ errors.qty }}</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Safety Stok <b class="req">*</b></span>
+        <input
+          class="input"
+          :class="{ 'input--error': errors.safety }"
+          type="number"
+          min="0"
+          v-model.number="form.safety"
+          placeholder="20">
+        <span class="field__error" v-if="errors.safety">{{ errors.safety }}</span>
+      </label>
+
+      <label class="field field--wide">
+        <span class="field__label">Catatan (boleh HTML)</span>
+        <input class="input" type="text" v-model="form.catatanHTML" placeholder="&lt;em&gt;Edisi 2024&lt;/em&gt;">
+        <span class="field__hint">Ditampilkan sebagai tooltip pada kolom Status — HTML dirender dengan v-html.</span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn--primary" @click="submit">
+        {{ isEdit ? 'Simpan Perubahan' : 'Simpan Bahan Ajar' }}
+      </button>
+      <button type="button" class="btn btn--ghost" @click="resetForm">Kosongkan Form</button>
+      <span class="muted small">Tekan <kbd>Enter</kbd> untuk menyimpan.</span>
+    </div>
+  </section>
+</script>

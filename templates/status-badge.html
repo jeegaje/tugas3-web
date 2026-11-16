@@ -1,0 +1,30 @@
+<!--
+  File      : templates/status-badge.html
+  Template  : tpl-status-badge (komponen <ba-status-badge>)
+  Indikator : 1.3 conditional v-if/v-else-if/v-else, 1.2 v-bind :class & :style
+-->
+<script type="text/x-template" id="tpl-status-badge">
+  <span class="badge-wrap">
+    <span
+      v-if="status.key === 'aman'"
+      class="badge badge--aman"
+      :style="{ color: '#16a34a' }"
+      :title="'Aman: stok ' + qty + ' ≥ safety ' + safety">
+      ✓ Aman
+    </span>
+    <span
+      v-else-if="status.key === 'menipis'"
+      class="badge badge--menipis"
+      :style="{ color: '#f59e0b' }"
+      :title="'Menipis: stok ' + qty + ' < safety ' + safety">
+      ⚠ Menipis
+    </span>
+    <span
+      v-else
+      class="badge badge--kosong"
+      :style="{ color: '#dc2626' }"
+      title="Kosong: stok habis">
+      ✕ Kosong
+    </span>
+  </span>
+</script>

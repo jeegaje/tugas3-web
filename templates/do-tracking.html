@@ -1,0 +1,200 @@
+<!--
+  File      : templates/do-tracking.html
+  Template  : tpl-tracking (komponen <ba-do-tracking>)
+  Indikator : 1.2 v-for perjalanan + filter tanggal, 1.3 empty state,
+              1.4 hasil pencarian & timeline, 1.6 form DO + validasi + Enter/Esc
+-->
+<script type="text/x-template" id="tpl-tracking">
+  <section class="page">
+    <header class="page__head">
+      <div>
+        <h1>Tracking Delivery Order</h1>
+        <p class="muted">Cari DO lewat Nomor DO atau NIM, buat DO baru, dan catat progress perjalanan.</p>
+      </div>
+      <span class="pill" v-text="tracking.length + ' DO'"></span>
+    </header>
+
+    <!-- Pencarian: Enter = cari, Esc = reset -->
+    <div class="card">
+      <div class="search">
+        <input
+          class="input"
+          type="search"
+          v-model="keyword"
+          placeholder="Cari Nomor DO atau NIM… (Enter = cari, Esc = reset)"
+          @keyup.enter="searchDO"
+          @keyup.esc="resetSearch">
+        <button type="button" class="btn btn--primary" @click="searchDO">Cari</button>
+        <button type="button" class="btn btn--ghost" @click="resetSearch">Reset</button>
+      </div>
+      <p class="muted small">
+        Satu kolom untuk dua kriteria: teks dicocokkan ke <strong>Nomor DO</strong> dan <strong>NIM</strong>.
+        <span v-if="submitted">Hasil “{{ submitted }}”: <strong>{{ hasilPencarian.length }}</strong> DO.</span>
+        <span v-else>Menampilkan semua DO.</span>
+      </p>
+
+      <ul class="do-list" v-if="hasilPencarian.length > 1">
+        <li v-for="d in hasilPencarian" :key="d.noDO">
+          <button
+            type="button"
+            class="do-list__item"
+            :class="{ 'do-list__item--active': selectedDO && selectedDO.noDO === d.noDO }"
+            @click="selectedNoDO = d.noDO">
+            <strong class="mono">{{ d.noDO }}</strong>
+            <span>{{ d.nama }}</span>
+            <span class="muted">NIM {{ d.nim }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="grid-2">
+      <!-- DETAIL DO + TIMELINE -->
+      <div class="card" v-if="selectedDO">
+        <div class="card__head">
+          <div>
+            <h2 class="card__title mono">{{ selectedDO.noDO }}</h2>
+            <p class="muted small">Penerima: {{ selectedDO.nama }}</p>
+          </div>
+          <span class="pill pill--info">{{ selectedDO.status }}</span>
+        </div>
+
+        <dl class="detail-grid">
+          <div>
+            <dt>NIM</dt>
+            <dd>{{ selectedDO.nim }}</dd>
+          </div>
+          <div>
+            <dt>Nama</dt>
+            <dd>{{ selectedDO.nama }}</dd>
+          </div>
+          <div>
+            <dt>Ekspedisi</dt>
+            <dd>{{ ekspedisiLabel(selectedDO.ekspedisi) }}</dd>
+          </div>
+          <div>
+            <dt>Tanggal Kirim</dt>
+            <dd>{{ selectedDO.tanggalKirim | tanggalID }}</dd>
+          </div>
+          <div class="detail-grid__wide">
+            <dt>Paket Bahan Ajar</dt>
+            <dd>{{ paketLabel(selectedDO.paket) }}</dd>
+          </div>
+          <div>
+            <dt>Total Harga</dt>
+            <dd class="strong">{{ selectedDO.total | currency }}</dd>
+          </div>
+        </dl>
+
+        <div class="paket-isi" v-if="paketDO">
+          <span class="muted small">Isi paket:</span>
+          <span class="chip" v-for="kode in paketDO.isi" :key="kode">{{ kode }}</span>
+        </div>
+
+        <h3 class="subhead">Riwayat Perjalanan</h3>
+        <ol class="timeline" v-if="perjalananUrut.length">
+          <li v-for="(p, i) in perjalananUrut" :key="p.waktu + '-' + i" class="timeline__item">
+            <time class="timeline__time">{{ p.waktu | tanggalWaktu }}</time>
+            <p class="timeline__text">{{ p.keterangan }}</p>
+          </li>
+        </ol>
+        <p class="muted small" v-else>Belum ada riwayat perjalanan untuk DO ini.</p>
+
+        <div class="inline-form">
+          <input
+            class="input"
+            type="text"
+            v-model="perjalananBaru"
+            placeholder="Keterangan progress (mis. Tiba di hub Bandung)"
+            @keyup.enter="tambahPerjalanan">
+          <button type="button" class="btn btn--primary" @click="tambahPerjalanan">+ Tambah Progress</button>
+        </div>
+        <p class="field__error" v-if="errorPerjalanan">{{ errorPerjalanan }}</p>
+        <p class="muted small">Waktu dicatat otomatis saat progress ditambahkan.</p>
+      </div>
+
+      <div class="card empty" v-else>
+        <p class="empty__icon">📦</p>
+        <p v-if="submitted">Tidak ada DO yang cocok dengan “{{ submitted }}”.</p>
+        <p v-else>Belum ada Delivery Order. Buat DO baru di form sebelah.</p>
+        <p class="muted small">Tekan <kbd>Esc</kbd> pada kolom pencarian untuk menampilkan semua DO.</p>
+      </div>
+
+      <!-- FORM DO BARU -->
+      <div class="card" @keyup.enter="tambahDO">
+        <div class="card__head">
+          <div>
+            <h2 class="card__title">Tambah Delivery Order</h2>
+            <p class="muted small">Nomor DO otomatis: <strong class="mono">{{ nextNoDo }}</strong></p>
+          </div>
+        </div>
+
+        <div class="form-grid form-grid--single">
+          <label class="field">
+            <span class="field__label">NIM <b class="req">*</b></span>
+            <input
+              class="input"
+              :class="{ 'input--error': errors.nim }"
+              type="text"
+              inputmode="numeric"
+              v-model.trim="form.nim"
+              placeholder="123456789">
+            <span class="field__error" v-if="errors.nim">{{ errors.nim }}</span>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Nama <b class="req">*</b></span>
+            <input
+              class="input"
+              :class="{ 'input--error': errors.nama }"
+              type="text"
+              v-model.trim="form.nama"
+              placeholder="Nama mahasiswa">
+            <span class="field__error" v-if="errors.nama">{{ errors.nama }}</span>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Ekspedisi <b class="req">*</b></span>
+            <select class="input" :class="{ 'input--error': errors.ekspedisi }" v-model="form.ekspedisi">
+              <option value="">— pilih ekspedisi —</option>
+              <option v-for="e in pengirimanList" :key="e.kode" :value="e.kode">{{ e.nama }}</option>
+            </select>
+            <span class="field__error" v-if="errors.ekspedisi">{{ errors.ekspedisi }}</span>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Paket Bahan Ajar <b class="req">*</b></span>
+            <select class="input" :class="{ 'input--error': errors.paket }" v-model="selectedPaket">
+              <option value="">— pilih paket —</option>
+              <option v-for="p in paket" :key="p.kode" :value="p.kode">{{ p.kode }} — {{ p.nama }}</option>
+            </select>
+            <span class="field__error" v-if="errors.paket">{{ errors.paket }}</span>
+          </label>
+
+          <div class="field" v-if="isiPaket.length">
+            <span class="field__label">Isi Paket</span>
+            <div class="chips">
+              <span class="chip" v-for="kode in isiPaket" :key="kode">{{ kode }}</span>
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="field__label">Tanggal Kirim</span>
+            <input class="input" type="date" v-model="form.tanggalKirim">
+          </label>
+
+          <div class="field">
+            <span class="field__label">Total Harga (dari paket)</span>
+            <div class="total-box">{{ total | currency }}</div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn--primary" @click="tambahDO">Simpan DO</button>
+          <button type="button" class="btn btn--ghost" @click="resetFormDO">Reset Form</button>
+          <span class="muted small">Tekan <kbd>Enter</kbd> untuk menyimpan.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</script>
